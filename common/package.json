@@ -1,0 +1,20 @@
+{
+  "name": "@sumit-1803/medium-common",
+  "version": "1.0.1",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [
+    "medium",
+    "common"
+  ],
+  "author": "Sumit Kumar",
+  "license": "MIT",
+  "description": "",
+  "dependencies": {
+    "zod": "^3.23.8"
+  }
+  
+}
