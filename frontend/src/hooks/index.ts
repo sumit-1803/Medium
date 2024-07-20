@@ -4,12 +4,17 @@ import axios from 'axios';
 import { BACKEND_URL } from '../config';
 
 export interface Blog {
+    author: {
+        name: string;
+    };
     title: string;
     content: string;
     publishedDate: string;
     description: string;
     imageUrl: string;
 }
+
+
 
 export const useBlog = ({id}:{id: string}) => {
     const [loading , setLoading] = useState(true);

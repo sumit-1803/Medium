@@ -2,7 +2,7 @@ import Appbar from "../components/Appbar"
 import axios from "axios"
 import { BACKEND_URL } from "../config"
 import { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Publish = () => {
     const [title, setTitle] = useState("");
@@ -19,8 +19,8 @@ const Publish = () => {
                 <TextEditor onChange={(e) => {
                     setDescription(e.target.value)
                 }} />
-                <button onClick={() => {
-                    const response = axios.post(`${BACKEND_URL}/api/v1/blog`, {
+                <button onClick={async() => {
+                    const response = await axios.post(`${BACKEND_URL}/api/v1/blog`, {
                         title,
                         content : description
                     }, {
@@ -28,7 +28,7 @@ const Publish = () => {
                             Authorization: `Bearer ${localStorage.getItem("token")}`
                         }
                     })
-                    navigate(`/blogs/${response.data.id}`)
+                    navigate(`/blogs`)
                 }} type="submit" className="inline-flex items-center px-5 py-2.5 text-sm font-medium text-center text-white bg-blue-700 rounded-lg focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-900 hover:bg-blue-800">
                     Publish post
                 </button>

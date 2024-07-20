@@ -6,8 +6,8 @@ interface BlogCardProps {
     title: string;
     content: string;
     publishedDate: string;
-    description: string;
-    imageUrl: string;
+    // description: string;
+    // imageUrl: string;
     id: string;
 }
 
@@ -18,8 +18,8 @@ const BlogCard = ({
     title,
     content,
     publishedDate,
-    description,
-    imageUrl
+    // description,
+    // imageUrl
 
 }: BlogCardProps) => {
     return (<Link to={`/blog/${id}`}>
