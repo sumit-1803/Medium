@@ -13,12 +13,16 @@ export const Auth = ({ type }: { type: "signup" | "signin" }) => {
         password: ""
     });
 
-   async function  sendRequest(){
+   async function   sendRequest(){
     try {
         const response = await axios.post(`${BACKEND_URL}/api/v1/user/${type === "signup" ?  "signup" : "signin"}`,postInputs );
-        const jwt  = response.data 
-        localStorage.setItem("token ", jwt)
-        navigate("/blog")
+         const jwt  = response.data.jwt
+
+         alert("token is " + jwt)
+         
+         localStorage.clear()
+         localStorage.setItem("token", jwt)
+        navigate("/blogs")
     } catch (e) {
         // alert the user the req failed 
         console.log(e)
