@@ -2,8 +2,8 @@ import { Hono } from 'hono';
 import { PrismaClient } from '@prisma/client/edge';
 import { withAccelerate } from '@prisma/extension-accelerate';
 import { verify } from 'hono/jwt';
-import { JWTPayload } from 'hono/utils/jwt/types';
-import { signupInput,createBlogInput } from "@sumit-1803/medium-common";
+import { updateBlogInput, createBlogInput } from "@sumit-1803/medium-common";
+
 
 
 export const blogRouter = new Hono<{
@@ -17,24 +17,24 @@ export const blogRouter = new Hono<{
 }>();
 
 blogRouter.use("*", async (c, next) => {
-  // Extract user ID and pass it to the next middleware
-  const authHeader = c.req.header('Authorization') || '';
-  const token = authHeader.split(' ')[1];
+  const authHeader = c.req.header('Authorization') || "";
+  const token = authHeader.split(" ")[1];
 
   try {
-    const user = await verify(token, c.env.JWT_SECRET) as JWTPayload & { id: string }; // Ensure the user object has an id property
-
-    if (user && user.id) {
-      c.set('userId', user.id); // Set the userId correctly
+    const user = await verify(token, c.env.JWT_SECRET);
+    if (user.id) {
+      c.set('userId', user.id.toString());
       await next();
     } else {
       c.status(403);
-      return c.json({ message: 'Unauthenticated' });
+      return c.json({ message: 'You Are Not Logged In and error while setting userid in middleware' });
     }
   } catch (error) {
     console.error('JWT verification error:', error);
     c.status(403);
-    return c.json({ message: 'Unauthenticated' });
+    return c.json({
+      message: 'You Are Not Logged In and error while setting userid in middleware',
+    });
   }
 });
 
@@ -42,12 +42,12 @@ blogRouter.use("*", async (c, next) => {
 blogRouter.post('/', async (c) => {
   try {
     const body = await c.req.json();
-    const {success} = createBlogInput.safeParse(body);
+    const { success } = createBlogInput.safeParse(body);
     if (!success) {
       c.status(411);
       return c.json({ message: 'Invalid input' });
     }
-    const userId = c.get('userId');
+    const authorId = c.get('userId');
     const prisma = new PrismaClient({
       datasourceUrl: c.env?.DATABASE_URL,
     }).$extends(withAccelerate());
@@ -56,82 +56,123 @@ blogRouter.post('/', async (c) => {
       data: {
         title: body.title,
         content: body.content,
-        authorId: userId,
+        authorId: authorId,
       }
     });
 
-    return c.json({ id: blog.id });
+    return c.json({ 
+      id: blog.id 
+    });
+
   } catch (error) {
     console.error('Error creating blog post:', error);
     c.status(500);
-    return c.json({ message: 'Internal Server Error' });
+    return c.json({ message: 'Internal Server Error while creating blog post' });
   }
 });
 
 // Update blog post request
-blogRouter.put('/blog', async (c) => {
+blogRouter.put('/', async (c) => {
   try {
     const body = await c.req.json();
-    const userId = c.get('userId');
-    const prisma = new PrismaClient({
+    const { success } = updateBlogInput.safeParse(body);
+    if (!success) {
+      c.status(411);
+      return c.json({ message: 'Invalid input' });
+    }
+
+     const prisma = new PrismaClient({
       datasourceUrl: c.env?.DATABASE_URL,
     }).$extends(withAccelerate());
 
-    await prisma.post.update({
-      where: {
-        id: body.id,
-        authorId: userId,
-      },
+    const blog = await prisma.post.update({
+      where: { id: body.id },
       data: {
         title: body.title,
         content: body.content,
       }
     });
 
-    return c.text("Updated Successfully");
+    return c.json({
+      id: blog.id
+    });
   } catch (error) {
     console.error('Error updating blog post:', error);
     c.status(500);
-    return c.json({ message: 'Internal Server Error' });
+    return c.json({ message: 'Error updating blog post ' });
   }
 });
+
 
 // Get bulk blog posts request
 blogRouter.get('/bulk', async (c) => {
   try {
+    // Create a new PrismaClient instance
     const prisma = new PrismaClient({
       datasourceUrl: c.env?.DATABASE_URL,
     }).$extends(withAccelerate());
 
-    const posts = await prisma.post.findMany();
+    // Fetch blog posts
+    const blogs = await prisma.post.findMany({
+      select: {
+        content: true,
+        title: true,
+        id: true,
+        author: {
+          select: {
+            name: true,
+          }
+        }
+      }
+    });
 
-    return c.json(posts);
+    // Close the PrismaClient connection
+    await prisma.$disconnect();
+
+    // Return the fetched blogs as a JSON response
+    return c.json({ blogs });
   } catch (error) {
     console.error('Error fetching bulk blog posts:', error);
+    
+    // Return an error response
     c.status(500);
-    return c.json({ message: 'Internal Server Error' });
+    return c.json({ message: 'Error while fetching bulk posts' });
   }
 });
 
 // Route to get a single blog
 blogRouter.get('/:id', async (c) => {
+  const id = c.req.param("id");
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate())
+
   try {
-    const id = c.req.param('id');
-    const prisma = new PrismaClient({
-      datasourceUrl: c.env?.DATABASE_URL,
-    }).$extends(withAccelerate());
-
-    const post = await prisma.post.findUnique({
-      where: { id }
-    });
-
-    return c.json(post);
-  } catch (error) {
-    console.error('Error fetching blog post:', error);
-    c.status(500);
-    return c.json({ message: 'Internal Server Error' });
+      const blog = await prisma.post.findFirst({
+          where: {
+              id: String(id)
+          },
+          select: {
+              id: true,
+              title: true,
+              content: true,
+              author: {
+                  select: {
+                      name: true
+                  }
+              }
+          }
+      })
+  
+      return c.json({
+          blog
+      });
+  } catch(e) {
+      c.status(411); // 4
+      return c.json({
+          message: "Error while fetching single blog post"
+      });
   }
-});
-
+})
 
 export default blogRouter;

@@ -13,7 +13,7 @@ export const userRouter = new Hono<
     }
 }>();
 
-// SignUp post request
+// SignUp post request 
   
 userRouter.post('/signup', async (c) => {
   const prisma = new PrismaClient({
@@ -33,12 +33,12 @@ userRouter.post('/signup', async (c) => {
         name: body.name
 			}
 		});
-	
+    
 		const token = await sign({ id: user.id}, c.env.JWT_SECRET);
-
     return c.json({ token });
+
 	} catch(e) {
-    return c.json({ message: 'User already exists' }, 403);
+    return c.json({ "message" : " Internal server error" }, 500);
 	}
 })
 
@@ -49,8 +49,9 @@ userRouter.post('/signin', async(c) => {
     datasourceUrl: c.env.DATABASE_URL,
   }).$extends(withAccelerate())
 
-  const body = await c.req.json()
-  const user = await prisma.user.findUnique({
+  try {
+    const body = await c.req.json()
+    const user = await prisma.user.findUnique({
     where: {
       email: body.email,
     },
@@ -61,4 +62,8 @@ userRouter.post('/signin', async(c) => {
   }
   const jwt = await sign({ id: user.id }, c.env.JWT_SECRET)
   return c.json({ jwt })
+  } catch (error) {
+    c.status(403);
+    return c.json({ message: 'Internal server error' },500)
+  }
 })

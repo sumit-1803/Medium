@@ -7,7 +7,7 @@
   "dependencies": {
     "@prisma/client": "^5.17.0",
     "@prisma/extension-accelerate": "^1.1.0",
-    "@sumit-1803/medium-common": "^1.0.1",
+    "@sumit-1803/medium-common": "^1.0.3",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.5",
     "hono": "^4.5.0",
@@ -16,6 +16,6 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240529.0",
     "@types/bcrypt": "^5.0.2",
-    "wrangler": "^3.57.2"
+    "wrangler": "^3.65.1"
   }
 }

@@ -15,5 +15,6 @@
     "jsxImportSource": "hono/jsx",
     "rootDir": "./src",
     "outDir": "./dist",
+    
   },
 }
